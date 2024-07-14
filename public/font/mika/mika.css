@@ -1,0 +1,16 @@
+@font-face {
+  font-family: mika-bold;
+  src: url(./MIKA-Bold.ttf);
+}
+@font-face {
+  font-family: mika-light;
+  src: url(./MIKA-Light.ttf);
+}
+@font-face {
+  font-family: mika-regular;
+  src: url(./MIKA-Regular.ttf);
+}
+@font-face {
+  font-family: mika-semiBold;
+  src: url(./MIKA-SemiBold.ttf);
+}

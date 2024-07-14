@@ -1,0 +1,50 @@
+.container {
+  margin: auto;
+  /* width: 200px; */
+  position: relative;
+}
+
+.block {
+  width: 100%;
+  position: absolute;
+  bottom: 0px;
+  top: 0px;
+  box-shadow: inset 0 -250px 300px 0 rgb(162, 18, 18);
+}
+.bar {
+  position: absolute;
+  top: 340px;
+  left: -100px;
+  z-index: 1030;
+  background-color: #b4b2b274 !important;
+  color: #000;
+  overflow: hidden;
+  font-size: 11px;
+  padding: 1000px 600px;
+}
+
+.second-bar {
+  position: absolute;
+  top: 530px;
+  left: -200px;
+  z-index: 1030;
+  background-color: #403d3d !important;
+  color: #000;
+  transform: rotate(15deg);
+  overflow: hidden;
+  font-size: 11px;
+  padding: 200px 900px;
+}
+
+.third-bar {
+  position: absolute;
+  top: 450px;
+  left: -200px;
+  z-index: 1030;
+  background-color: #5b5b5b !important;
+  color: #fdfcfc;
+  transform: rotate(28deg);
+  overflow: hidden;
+  font-size: 11px;
+  padding: 200px 460px;
+}
