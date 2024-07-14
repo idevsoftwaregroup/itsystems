@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../../components/common/Loader";
 import * as Services from "../../services/organizationChartServices/SystemDetailService";
-import { IoImage } from "react-icons/io5";
 
 const SystemPage = () => {
   const fileStorageUrl = process.env.REACT_APP_FILESTORAGE_API_URL;
@@ -13,15 +12,16 @@ const SystemPage = () => {
   const [data, setData] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [systemsPerPage] = useState(10); // Number of systems per page
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true); // Set loading state to true before fetching
-        const res = await Services.getAllSystems(); // Fetch systems data
+        setLoading(true);
+        const res = await Services.getAllSystems();
         if (res.success && res.data) {
-          setData(res.data); // Update state with fetched data
+          setData(res.data);
         } else {
           console.error("No data returned from API");
         }
@@ -30,146 +30,103 @@ const SystemPage = () => {
         // Handle error (e.g., redirect to error page)
         // navigate("/not-found");
       } finally {
-        setLoading(false); // Set loading state to false after fetching
+        setLoading(false);
       }
     };
 
-    fetchData(); // Call fetchData when component mounts
-  }, [id, navigate]); // Dependency array: run effect when id or navigate changes
+    fetchData();
+  }, [id, navigate]);
 
-  // Logic to paginate data
   const indexOfLastSystem = currentPage * systemsPerPage;
   const indexOfFirstSystem = indexOfLastSystem - systemsPerPage;
-  const currentSystems = data ? data.slice(indexOfFirstSystem, indexOfLastSystem) : [];
 
-  // Change page
+  // Function to filter data based on searchTerm
+  const filteredSystems = data
+    ? data.filter((system) =>
+        Object.keys(system).some((key) =>
+          system[key]
+            ? system[key]
+                .toString()
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+            : false
+        )
+      )
+    : [];
+
+  const currentSystems = filteredSystems.slice(
+    indexOfFirstSystem,
+    indexOfLastSystem
+  );
+
+  // Function to handle pagination
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  // Function to copy URL to clipboard
   const copyUrlToClipboard = (computerName) => {
     const url = `${urlData}/system/${encodeURIComponent(computerName)}`;
     navigator.clipboard.writeText(url);
-    // You can optionally show a toast or alert to indicate successful copy
     console.log(`Copied URL to clipboard: ${url}`);
   };
 
+  // Function to handle search input change
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset pagination to first page when searching
+  };
+
+  const highlightText = (text, highlight) => {
+    if (!highlight.trim()) {
+      return text;
+    }
+    const regex = new RegExp(`(${highlight})`, 'gi');
+    return text.replace(regex, match => `<span class="highlight">${match}</span>`);
+  };
+
   if (loading || !data) {
-    return <Loader />; // Render loader while fetching data
+    return <Loader />;
   }
 
-  // Calculate total pages
-  const totalPages = Math.ceil(data.length / systemsPerPage);
+  const totalPages = Math.ceil(filteredSystems.length / systemsPerPage);
 
   return (
     <div className="relative overflow-x-auto">
+      <div className="mb-4 flex justify-right pt-5">
+        <label className="p-3">جستجو کنید :</label>
+        <input
+          type="text"
+          placeholder="نام سیستم و سایر موارد ..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="p-2 border rounded-md w-64 text-sm focus:outline-none focus:ring focus:border-blue-300"
+        />
+      </div>
       <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
           <tr>
-            <th scope="col" className="px-6 py-3">
-              نام سیستم
-            </th>
-            <th scope="col" className="px-6 py-3">
-              کاربر
-            </th>
-            <th scope="col" className="px-6 py-3">
-              سیستم عامل
-            </th>
-            <th scope="col" className="px-6 py-3">
-              حافظه سیستم
-            </th>
-            <th scope="col" className="p-6 py-3">
-              نام مادربورد
-            </th>
-            <th scope="col" className="p-6 py-3">
-              مدل مادربورد
-            </th>
-            <th scope="col" className="p-6 py-3">
-              پردازنده مرکزی ( CPU‌ )
-            </th>
-            <th scope="col" className="p-6 py-3">
-              توضیحات
-            </th>
-            <th scope="col" className="p-6 py-3">
-              محل استفاده
-            </th>
-            <th scope="col" className="p-6 py-3">
-              تصویر سیستم
-            </th>
-            <th scope="col" className="p-6 py-3">
-              نوع کاربری سیستم
-            </th>
-            <th scope="col" className="p-6 py-3">
-              عملیات
-            </th>
+            <th scope="col" className="px-6 py-3">نام سیستم</th>
+            <th scope="col" className="px-6 py-3">نام کاربر</th>
+            <th scope="col" className="px-6 py-3">سیستم عامل</th>
+            <th scope="col" className="p-6 py-3">مدل مادربورد</th>
+            <th scope="col" className="p-6 py-3">پردازنده مرکزی</th>
+            <th scope="col" className="p-6 py-3">محل استفاده</th>
+            <th scope="col" className="p-6 py-3">نوع کاربری</th>
+            <th scope="col" className="p-6 py-3">عملیات</th>
           </tr>
         </thead>
         <tbody>
           {currentSystems.map((system) => (
-            <tr
-              key={system.systemId}
-              className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
-            >
-              <td className="px-6 py-4 whitespace-nowrap">
-                {system.computerName ? system.computerName : "ثبت نشده"}
-              </td>
+            <tr key={system.systemId} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+              <td className="px-6 py-4 whitespace-nowrap" dangerouslySetInnerHTML={{ __html: highlightText(system.computerName || "ثبت نشده", searchTerm) }}></td>
+              <td className="px-6 py-4" dangerouslySetInnerHTML={{ __html: highlightText(system.user || "ثبت نشده", searchTerm) }}></td>
+              <td className="px-6 py-4" dangerouslySetInnerHTML={{ __html: highlightText(system.os || "ثبت نشده", searchTerm) }}></td>
+              <td className="px-6 py-4" dangerouslySetInnerHTML={{ __html: highlightText(system.mainBoardModel || "ثبت نشده", searchTerm) }}></td>
+              <td className="px-6 py-4" dangerouslySetInnerHTML={{ __html: highlightText(system.cpu || "ثبت نشده", searchTerm) }}></td>
+              <td className="px-6 py-4" dangerouslySetInnerHTML={{ __html: highlightText(system.location || "ثبت نشده", searchTerm) }}></td>
+              <td className="px-6 py-4" dangerouslySetInnerHTML={{ __html: highlightText(system.systemTypeName || "ثبت نشده", searchTerm) }}></td>
               <td className="px-6 py-4">
-                {system.user ? system.user : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.os ? system.os : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.ram ? system.ram : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.mainBoardName ? system.mainBoardName : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.mainBoardModel ? system.mainBoardModel : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.cpu ? system.cpu : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.description ? system.description : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.location ? system.location : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                {system.systemPicUrl ? (
-                  <img
-                    src={`${fileStorageUrl}${system.systemPicUrl}`}
-                    alt={`تصویر سیستم ${system.systemId}`}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <IoImage size={45} className="text-gray-400" />
-                )}
-              </td>
-              <td className="px-6 py-4">
-                {system.systemTypeName ? system.systemTypeName : "ثبت نشده"}
-              </td>
-              <td className="px-6 py-4">
-                <button
-                  onClick={() => copyUrlToClipboard(system.computerName)}
-                  className="text-white hover:underline focus:outline-none px-5"
-                >
-                  کپی
-                </button>
-                <button
-                  className="text-white bg-blue-500 focus:outline-none"
-                  onClick={() => {
-                    // Define your navigation logic here, for example:
-                    window.open(
-                      `${urlData}/system/${encodeURIComponent(
-                        system.computerName
-                      )}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  دیدن
-                </button>
+                <button onClick={() => copyUrlToClipboard(system.computerName)} className="text-white focus:outline-none px-5">کپی</button>
+                <button className="text-white bg-blue-500 focus:outline-none" onClick={() => { window.open(`${urlData}/system/${encodeURIComponent(system.computerName)}`, "_blank"); }}>دیدن</button>
               </td>
             </tr>
           ))}
@@ -190,9 +147,7 @@ const SystemPage = () => {
           <button
             key={index}
             onClick={() => paginate(index + 1)}
-            className={`bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-700 py-2 px-4 ml-2 rounded ${
-              currentPage === index + 1 ? "bg-gray-300" : ""
-            }`}
+            className={`bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-700 py-2 px-4 ml-2 rounded ${currentPage === index + 1 ? "bg-gray-300" : ""}`}
           >
             {index + 1}
           </button>
